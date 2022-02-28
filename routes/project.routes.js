@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const Project = require("../models/Project.model");
+const Task = require("../models/Task.model");
 const mongoose = require("mongoose");
 
 router.post("/", (req, res) => {
@@ -36,7 +37,7 @@ router.get('/', (req, res, next) => {
 
 router.get('/:projectId', (req, res, next) => {
   const { projectId } = req.params;
- 
+
   if (!mongoose.Types.ObjectId.isValid(projectId)) {
     res.status(400).json({ message: 'Specified id is not valid' });
     return;
@@ -58,9 +59,33 @@ router.put('/:projectId', (req, res, next) => {
     return;
   }
 
-  Project.findByIdAndUpdate(projectId, req.body, { new: true })
+  const projectDetails = {
+    title: req.body.title,
+    description: req.body.description,
+    tasks: req.body.tasks,
+  }
+
+  Project.findByIdAndUpdate(projectId, projectDetails, { new: true })
     .then((updatedProject) => res.json(updatedProject))
-    .catch(error => res.json(error));
+    .catch(error => res.status(500).json(error));
+});
+
+
+
+router.delete('/:projectId', (req, res, next) => {
+  const { projectId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(projectId)) {
+    res.status(400).json({ message: 'Specified id is not valid' });
+    return;
+  }
+
+  Project.findByIdAndRemove(projectId)
+    .then( deteletedProject => {
+      return Task.deleteMany( { _id: { $in: deteletedProject.tasks } } );
+    })
+    .then(() => res.json({ message: `Project with ${projectId} is removed successfully.` }))
+    .catch(error => res.status(500).json(error));
 });
 
 
