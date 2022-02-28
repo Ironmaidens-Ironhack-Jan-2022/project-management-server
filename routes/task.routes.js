@@ -5,15 +5,28 @@ const Task = require('../models/Task.model');
 const Project = require('../models/Project.model');
 
 
-router.post('/', (req, res, next) => {
-  const { title, description, projectId } = req.body;
+router.post('/', (req, res) => {
 
-  Task.create({ title, description, project: projectId })
+  const {projectId} = req.body;
+
+  const taskDetails = { 
+    title: req.body.title,
+    description: req.body.description,
+    project: projectId
+  };
+
+  Task.create(taskDetails)
     .then(newTask => {
-      return Project.findByIdAndUpdate(projectId, { $push: { tasks: newTask._id } } );
+      return Project.findByIdAndUpdate(projectId, { $push: { tasks: newTask._id } });
     })
     .then(response => res.json(response))
-    .catch(err => res.json(err));
+    .catch( err => {
+      console.log("error creating a new task", err);
+      res.status(500).json({
+        message: "error creating a new task",
+        error: err
+      });
+    })
 });
 
 module.exports = router;
