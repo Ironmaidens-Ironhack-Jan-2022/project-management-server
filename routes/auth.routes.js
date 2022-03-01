@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const jwt = require("jsonwebtoken")
 
 // ℹ️ Handles password encryption
 const bcrypt = require("bcrypt");
@@ -108,15 +109,30 @@ router.post("/login", isLoggedOut, (req, res, next) => {
         return res.status(400).json({ errorMessage: "Wrong credentials." });
       }
 
-      // If user is found based on the username, check if the in putted password matches the one saved in the database
-      bcrypt.compare(password, user.password).then((isSamePassword) => {
-        if (!isSamePassword) {
-          return res.status(400).json({ errorMessage: "Wrong credentials." });
-        }
-        req.session.user = user;
-        // req.session.user = user._id; // ! better and safer but in this case we saving the entire user object
-        return res.json(user);
-      });
+
+
+
+
+ // If user is found based on the username, check if the in putted password matches the one saved in the database
+      bcrypt.compare(password, user.password)
+        .then((isSamePassword) => {
+          if (!isSamePassword) {
+            return res.status(400).json({ errorMessage: "Wrong credentials." });
+          }
+
+          const payload = {
+            _id: user._id,
+            username: user.username
+          }
+
+          const authToken = jwt.sign( 
+            payload,
+            process.env.TOKEN_SECRET,
+            { algorithm: 'HS256', expiresIn: "6h" }
+          );
+
+          return res.json({ authToken: authToken });
+        });
     })
 
     .catch((err) => {
