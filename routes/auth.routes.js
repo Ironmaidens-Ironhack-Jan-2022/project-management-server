@@ -1,5 +1,6 @@
 const router = require("express").Router();
-const jwt = require("jsonwebtoken")
+const jwt = require("jsonwebtoken");
+const { isAuthenticated } = require("../middleware/jwt.middleware"); 
 
 // ℹ️ Handles password encryption
 const bcrypt = require("bcrypt");
@@ -11,15 +12,11 @@ const saltRounds = 10;
 // Require the User model in order to interact with the database
 const User = require("../models/User.model");
 
-// Require necessary (isLoggedOut and isLiggedIn) middleware in order to control access to specific routes
-const isLoggedOut = require("../middleware/isLoggedOut");
-const isLoggedIn = require("../middleware/isLoggedIn");
-
 router.get("/loggedin", (req, res) => {
   res.json(req.user);
 });
 
-router.post("/signup", isLoggedOut, (req, res) => {
+router.post("/signup", (req, res) => {
   const { username, password } = req.body;
 
   if (!username) {
@@ -65,8 +62,6 @@ router.post("/signup", isLoggedOut, (req, res) => {
         });
       })
       .then((user) => {
-        // Bind the user to the session object
-        req.session.user = user;
         res.status(201).json(user);
       })
       .catch((error) => {
@@ -109,7 +104,7 @@ router.post("/login", (req, res, next) => {
         return res.status(400).json({ errorMessage: "Wrong credentials." });
       }
 
- // If user is found based on the username, check if the in putted password matches the one saved in the database
+      // If user is found based on the username, check if the in putted password matches the one saved in the database
       bcrypt.compare(password, user.password)
         .then((isSamePassword) => {
           if (!isSamePassword) {
@@ -121,7 +116,7 @@ router.post("/login", (req, res, next) => {
             username: user.username
           }
 
-          const authToken = jwt.sign( 
+          const authToken = jwt.sign(
             payload,
             process.env.TOKEN_SECRET,
             { algorithm: 'HS256', expiresIn: "6h" }
@@ -139,13 +134,10 @@ router.post("/login", (req, res, next) => {
     });
 });
 
-router.get("/logout", isLoggedIn, (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({ errorMessage: err.message });
-    }
-    res.json({ message: "Done" });
-  });
+
+router.get('/verify', isAuthenticated, (req, res, next) => {
+  res.json(req.payload);
 });
+
 
 module.exports = router;

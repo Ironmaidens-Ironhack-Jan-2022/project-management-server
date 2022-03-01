@@ -3,6 +3,8 @@ const authRoutes = require("./auth.routes");
 const projectRoutes = require("./project.routes");
 const taskRoutes = require("./task.routes");
 
+const { isAuthenticated } = require("../middleware/jwt.middleware"); 
+
 /* GET home page */
 router.get("/", (req, res, next) => {
   res.json("All good in here");
@@ -10,7 +12,7 @@ router.get("/", (req, res, next) => {
 
 
 router.use("/auth", authRoutes);
-router.use("/projects", projectRoutes);
-router.use("/tasks", taskRoutes);
+router.use("/projects", isAuthenticated, projectRoutes);
+router.use("/tasks", isAuthenticated, taskRoutes);
 
 module.exports = router;
