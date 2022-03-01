@@ -84,7 +84,7 @@ router.post("/signup", isLoggedOut, (req, res) => {
   });
 });
 
-router.post("/login", isLoggedOut, (req, res, next) => {
+router.post("/login", (req, res, next) => {
   const { username, password } = req.body;
 
   if (!username) {
@@ -108,10 +108,6 @@ router.post("/login", isLoggedOut, (req, res, next) => {
       if (!user) {
         return res.status(400).json({ errorMessage: "Wrong credentials." });
       }
-
-
-
-
 
  // If user is found based on the username, check if the in putted password matches the one saved in the database
       bcrypt.compare(password, user.password)
